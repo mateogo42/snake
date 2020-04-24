@@ -1,14 +1,13 @@
 extern crate rand;
 
 use rand::Rng;
-use amethyst::core::{Transform, SystemDesc};
+use amethyst::core::Transform;
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Join, Entities, ReadStorage, System, SystemData, WriteStorage, ReadExpect, WriteExpect};
-use amethyst::input::{InputHandler, StringBindings, VirtualKeyCode};
+use amethyst::ecs::{Join, Entities, System, SystemData, WriteStorage, WriteExpect};
 use amethyst::core::math::Vector3;
 use amethyst::renderer::SpriteRender;
 
-use crate::snake_state::{Player, Food, Body, BodyPart, Direction, WIDTH, SPRITE_WIDTH, HEIGHT, SCALE};
+use crate::snake::{Player, Food, Body, BodyPart, WIDTH, SPRITE_WIDTH, HEIGHT, SCALE};
 
 
 
@@ -29,11 +28,11 @@ impl<'s> System<'s> for FoodSystem {
     fn run(&mut self, (mut transforms, mut foods, mut player, mut bodies, mut sprites, entities): Self::SystemData) {
         let head_transform = transforms.get_mut(player.snake[0].part).unwrap().clone();
         let mut did_eat = false;
-        for (mut food, mut transform) in (&mut foods, &mut transforms).join() {
+        for (_, transform) in (&mut foods, &mut transforms).join() {
             if can_eat(&head_transform, transform) {
                 let mut rng = rand::thread_rng();
                 let x = rng.gen_range(1.0, WIDTH / SPRITE_WIDTH).floor();
-                let y = rng.gen_range(1.0, HEIGHT / SPRITE_WIDTH).floor() ;
+                let y = rng.gen_range(1.0, HEIGHT / SPRITE_WIDTH).floor();
                 transform.set_translation_xyz((x - 0.5) * SPRITE_WIDTH + SPRITE_WIDTH, (y - 0.5) * SPRITE_WIDTH, 0.0);
                 did_eat = true;
             }
@@ -53,14 +52,14 @@ impl<'s> System<'s> for FoodSystem {
                             .with(Body, &mut bodies)
                             .with(sprite_render, &mut sprites)
                             .build();
+
+            let new_dir = player.snake[1].dir;
+            player.snake.insert(1, BodyPart{part: new_body, dir: new_dir});
             for i in 1..player.snake.len() {
                 let cur_transform = transforms.get_mut(player.snake[i].part).unwrap();
                 cur_transform.prepend_translation_x(- player.vel.0 * SPRITE_WIDTH * 0.5);
                 cur_transform.prepend_translation_y(- player.vel.1 * SPRITE_WIDTH * 0.5);
             }
-
-            let new_dir = player.snake[1].dir;
-            player.snake.insert(1, BodyPart{part: new_body, dir: new_dir});
         }
     }
 }

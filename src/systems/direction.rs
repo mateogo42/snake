@@ -1,11 +1,9 @@
-use amethyst::core::{Transform, SystemDesc};
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Join, Read, ReadStorage, System, SystemData, World, ReadExpect, WriteExpect, WriteStorage};
-use amethyst::input::{InputHandler, StringBindings, VirtualKeyCode};
-use amethyst::renderer::{SpriteRender};
-use std::collections::HashMap;
+use amethyst::ecs::{Read, System, SystemData, WriteExpect, WriteStorage};
+use amethyst::input::{InputHandler, StringBindings};
+use amethyst::renderer::SpriteRender;
 
-use crate::snake_state::{Head, Body, Tail, Player, Direction, WIDTH, SPRITE_WIDTH};
+use crate::snake::{Player, Direction};
 
 #[derive(SystemDesc)]
 pub struct DirectionSystem;
@@ -60,7 +58,6 @@ impl<'s> System<'s> for DirectionSystem {
                     Direction::Down | Direction::LeftDown | Direction::RightDown => 14,
                     Direction::Right | Direction::DownRight | Direction::UpRight => 11,
                     Direction::Left | Direction::UpLeft | Direction::DownLeft => 13,
-                    _ => tail_sprite.sprite_number
                 };
             } else {
                 let mut body_sprite = sprites.get_mut(player.snake[i].part).unwrap();

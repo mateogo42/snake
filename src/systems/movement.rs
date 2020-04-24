@@ -1,11 +1,10 @@
-use amethyst::core::{Transform, SystemDesc};
+use amethyst::core::Transform;
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Join, Read, ReadStorage, System, SystemData, World, ReadExpect, WriteExpect, WriteStorage};
-use amethyst::input::{InputHandler, StringBindings, VirtualKeyCode};
-use amethyst::core::timing::{Time, Stopwatch};
+use amethyst::ecs::{System, SystemData, World, WriteExpect, WriteStorage};
+use amethyst::core::timing::Stopwatch;
 
 use std::time::{Duration, Instant};
-use crate::snake_state::{HEIGHT, Player, Direction, WIDTH, SPRITE_WIDTH};
+use crate::snake::{HEIGHT, Player, Direction, WIDTH, SPRITE_WIDTH};
 
 #[derive(SystemDesc)]
 pub struct MoveSystem {
@@ -26,29 +25,30 @@ impl<'s> System<'s> for MoveSystem {
     type SystemData = (
         WriteStorage<'s, Transform>,
         WriteExpect<'s, Player>,
-        Read<'s, Time>
     );
 
     fn setup(&mut self, _world: &mut World) {
         self.elapsed_time = Stopwatch::Started(Duration::from_millis(0), Instant::now());
     }
 
-    fn run(&mut self, (mut transforms, mut player, time): Self::SystemData) {                
+    fn run(&mut self, (mut transforms, mut player): Self::SystemData) {                
         if self.elapsed_time.elapsed() >= self.max_elapsed_time {
             let head_transform = transforms.get_mut(player.snake[0].part).unwrap();
             let mut prev_pos = (head_transform.translation().x, head_transform.translation().y);
             head_transform.prepend_translation_x(player.vel.0 * SPRITE_WIDTH);
             head_transform.prepend_translation_y(player.vel.1 * SPRITE_WIDTH);
-            player.snake[0].dir = match player.vel {
-                (1.0, 0.0) => Direction::Right,
-                (-1.0, 0.0) => Direction::Left,
-                (0.0, 1.0) => Direction::Up,
-                (0.0, -1.0) => Direction::Down,
-                _ => player.snake[0].dir,
+            player.snake[0].dir = if player.vel == (1.0, 0.0) {
+                Direction::Right
+            } else if player.vel == (-1.0, 0.0) {
+                Direction::Left
+            } else if player.vel == (0.0, 1.0) {
+                Direction::Up
+            } else if player.vel == (0.0, -1.0) {
+                Direction::Down
+            } else {
+                player.snake[0].dir
             };
 
-            println!("=============================================");
-            println!("{:?}", player.snake[0].dir);
             let mut prev_dir = player.snake[0].dir;
 
             check_bounds(head_transform);
@@ -59,8 +59,6 @@ impl<'s> System<'s> for MoveSystem {
                 let cur_dir = player.snake[i].dir;
 
                 player.snake[i].dir = get_new_dir(prev_dir, cur_dir);
-
-                println!("{:?}", player.snake[i].dir);
 
                 cur_transform.set_translation_x(prev_pos.0);
                 cur_transform.set_translation_y(prev_pos.1);
@@ -92,13 +90,11 @@ fn get_new_dir(prev: Direction, cur: Direction) -> Direction {
         Direction::Up | Direction::LeftUp | Direction::RightUp => match prev {
                 Direction::Right | Direction::RightDown | Direction::RightUp => Direction::UpRight,
                 Direction::Left | Direction::LeftDown | Direction::LeftUp => Direction::UpLeft,
-                // Direction::UpRight => Direction::RightUp,
                 _ => Direction::Up
             },
         Direction::Down | Direction::LeftDown | Direction::RightDown => match prev {
                 Direction::Right | Direction::RightDown | Direction::RightUp => Direction::DownRight,
                 Direction::Left | Direction::LeftDown | Direction::LeftUp => Direction::DownLeft,
-                // Direction::DownRight => Direction::RightDown,
                 _ => Direction::Down
             },
         Direction::Right | Direction::DownRight | Direction::UpRight => match prev {

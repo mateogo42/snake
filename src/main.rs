@@ -1,8 +1,7 @@
-mod snake_state;
+mod snake;
 mod systems;
 
-use crate::snake_state::Snake;
-use std::time::Duration;
+use crate::snake::Snake;
 use amethyst::{
     core::transform::TransformBundle,
     prelude::*,
@@ -14,7 +13,6 @@ use amethyst::{
     utils::application_root_dir,
     input::{InputBundle, StringBindings},
     ui::{RenderUi, UiBundle},
-    core::frame_limiter::FrameRateLimitStrategy,
 };
 
 fn main() -> amethyst::Result<()> {
@@ -45,14 +43,11 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(UiBundle::<StringBindings>::new())?
         .with(systems::DirectionSystem, "direction_system", &["input_system"])
         .with(systems::MoveSystem::default(), "move_system", &[])
-        .with(systems::FoodSystem, "food_system", &[]);
+        .with(systems::FoodSystem, "food_system", &[])
+        .with(systems::DeathSystem, "death_system", &[]);
 
 
     let assets_dir = app_root.join("assets");
-    let mut world = World::new();
-    // let mut game = Application::build(assets_dir, Snake::default())?
-    //                 .with_frame_limit(FrameRateLimitStrategy::Yield, 10)
-    //                 .build(game_data)?;
     let mut game = Application::new(assets_dir, Snake::default(), game_data)?;
    
     game.run();
