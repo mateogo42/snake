@@ -1,10 +1,10 @@
 use amethyst::core::Transform;
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{System, SystemData, World, WriteExpect, WriteStorage};
+use amethyst::ecs::{System, SystemData, World, Write, WriteStorage};
 use amethyst::core::timing::Stopwatch;
 
 use std::time::{Duration, Instant};
-use crate::snake::{HEIGHT, Player, Direction, WIDTH, SPRITE_WIDTH};
+use crate::states::{HEIGHT, Player, Direction, WIDTH, SPRITE_WIDTH};
 
 #[derive(SystemDesc)]
 pub struct MoveSystem {
@@ -24,50 +24,52 @@ impl Default for MoveSystem {
 impl<'s> System<'s> for MoveSystem {
     type SystemData = (
         WriteStorage<'s, Transform>,
-        WriteExpect<'s, Player>,
+        Write<'s, Player>,
     );
 
     fn setup(&mut self, _world: &mut World) {
         self.elapsed_time = Stopwatch::Started(Duration::from_millis(0), Instant::now());
     }
 
-    fn run(&mut self, (mut transforms, mut player): Self::SystemData) {                
-        if self.elapsed_time.elapsed() >= self.max_elapsed_time {
-            let head_transform = transforms.get_mut(player.snake[0].part).unwrap();
-            let mut prev_pos = (head_transform.translation().x, head_transform.translation().y);
-            head_transform.prepend_translation_x(player.vel.0 * SPRITE_WIDTH);
-            head_transform.prepend_translation_y(player.vel.1 * SPRITE_WIDTH);
-            player.snake[0].dir = if player.vel == (1.0, 0.0) {
-                Direction::Right
-            } else if player.vel == (-1.0, 0.0) {
-                Direction::Left
-            } else if player.vel == (0.0, 1.0) {
-                Direction::Up
-            } else if player.vel == (0.0, -1.0) {
-                Direction::Down
-            } else {
-                player.snake[0].dir
-            };
-
-            let mut prev_dir = player.snake[0].dir;
-
-            check_bounds(head_transform);
-
-            for i in 1..player.snake.len() {
-                let cur_transform = transforms.get_mut(player.snake[i].part).unwrap();
-                let cur_pos = (cur_transform.translation().x, cur_transform.translation().y);
-                let cur_dir = player.snake[i].dir;
-
-                player.snake[i].dir = get_new_dir(prev_dir, cur_dir);
-
-                cur_transform.set_translation_x(prev_pos.0);
-                cur_transform.set_translation_y(prev_pos.1);
-                prev_pos = cur_pos;
-                prev_dir = player.snake[i].dir;
-                
+    fn run(&mut self, (mut transforms, mut player): Self::SystemData) {
+        if player.snake.len() > 0 {
+            if self.elapsed_time.elapsed() >= self.max_elapsed_time {
+                let head_transform = transforms.get_mut(player.snake[0].part).unwrap();
+                let mut prev_pos = (head_transform.translation().x, head_transform.translation().y);
+                head_transform.prepend_translation_x(player.vel.0 * SPRITE_WIDTH);
+                head_transform.prepend_translation_y(player.vel.1 * SPRITE_WIDTH);
+                player.snake[0].dir = if player.vel == (1.0, 0.0) {
+                    Direction::Right
+                } else if player.vel == (-1.0, 0.0) {
+                    Direction::Left
+                } else if player.vel == (0.0, 1.0) {
+                    Direction::Up
+                } else if player.vel == (0.0, -1.0) {
+                    Direction::Down
+                } else {
+                    player.snake[0].dir
+                };
+    
+                let mut prev_dir = player.snake[0].dir;
+    
+                check_bounds(head_transform);
+    
+                for i in 1..player.snake.len() {
+                    let cur_transform = transforms.get_mut(player.snake[i].part).unwrap();
+                    let cur_pos = (cur_transform.translation().x, cur_transform.translation().y);
+                    let cur_dir = player.snake[i].dir;
+    
+                    player.snake[i].dir = get_new_dir(prev_dir, cur_dir);
+    
+                    cur_transform.set_translation_x(prev_pos.0);
+                    cur_transform.set_translation_y(prev_pos.1);
+                    prev_pos = cur_pos;
+                    prev_dir = player.snake[i].dir;
+                    
+                }
+                self.elapsed_time.restart();
             }
-            self.elapsed_time.restart();
-        }
+        }                
     }
 }
 

@@ -14,8 +14,8 @@ use amethyst::{
 pub const HEIGHT: f32 = 640.0;
 pub const WIDTH: f32 = 640.0;
 pub const SNAKE_VELOCITY: f32 = 1.0;
-pub const SCALE: f32 = 0.5;
-pub const SPRITE_WIDTH: f32 = 64.0 * SCALE;
+pub const SCALE: f32 = 1.0;
+pub const SPRITE_WIDTH: f32 = 32.0 * SCALE;
 
 #[derive(Default)]
 pub struct Snake {
@@ -52,6 +52,7 @@ pub struct Tail;
 #[derive(Default)]
 pub struct Body;
 
+#[derive(Default)]
 pub struct Player {
     pub snake: Vec<BodyPart>,
     pub vel: (f32, f32)
@@ -135,9 +136,9 @@ fn initialise_snake(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>)
         sprite_number: 11
     };
 
-    head_transform.set_translation_xyz((WIDTH * 0.5).floor() + SPRITE_WIDTH / 2.0, (HEIGHT * 0.5).floor() + SPRITE_WIDTH / 2.0, 0.0);
-    body_transform.set_translation_xyz(head_transform.translation().x - SPRITE_WIDTH * 0.5, HEIGHT * 0.5, 0.0);
-    tail_transform.set_translation_xyz(body_transform.translation().x - SPRITE_WIDTH * 0.5, HEIGHT * 0.5, 0.0);
+    head_transform.set_translation_xyz((WIDTH * 0.5).floor() + SPRITE_WIDTH * 0.5, (HEIGHT * 0.5).floor() + SPRITE_WIDTH * 0.5, 0.0);
+    body_transform.set_translation_xyz(head_transform.translation().x - SPRITE_WIDTH * 0.5, head_transform.translation().y, 0.0);
+    tail_transform.set_translation_xyz(body_transform.translation().x - SPRITE_WIDTH * 0.5, body_transform.translation().y, 0.0);
 
     head_transform.set_scale(Vector3::new(SCALE, SCALE, 1.0));
     body_transform.set_scale(Vector3::new(SCALE, SCALE, 1.0));

@@ -1,7 +1,6 @@
-mod snake;
+mod states;
 mod systems;
 
-use crate::snake::Snake;
 use amethyst::{
     core::transform::TransformBundle,
     prelude::*,
@@ -14,6 +13,8 @@ use amethyst::{
     input::{InputBundle, StringBindings},
     ui::{RenderUi, UiBundle},
 };
+
+use crate::systems::GameplaySystemBundle;
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
@@ -40,15 +41,12 @@ fn main() -> amethyst::Result<()> {
         )?
         .with_bundle(TransformBundle::new())?
         .with_bundle(input_bundle)?
-        .with_bundle(UiBundle::<StringBindings>::new())?
-        .with(systems::DirectionSystem, "direction_system", &["input_system"])
-        .with(systems::MoveSystem::default(), "move_system", &[])
-        .with(systems::FoodSystem, "food_system", &[])
-        .with(systems::DeathSystem, "death_system", &[]);
+        .with_bundle(GameplaySystemBundle)?
+        .with_bundle(UiBundle::<StringBindings>::new())?;
 
 
     let assets_dir = app_root.join("assets");
-    let mut game = Application::new(assets_dir, Snake::default(), game_data)?;
+    let mut game = Application::new(assets_dir, states::Menu::default(), game_data)?;
    
     game.run();
 
