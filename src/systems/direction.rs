@@ -16,7 +16,7 @@ impl<'s> System<'s> for DirectionSystem {
     );
 
     fn run(&mut self, (mut player, input, mut sprites): Self::SystemData) {
-        if player.snake.len() > 0 {
+        if player.is_alive {
             let cur_dir = player.snake[0].dir;
             let movement = match cur_dir {
                 Direction:: Up | Direction::Down => input.axis_value("horizontal"),

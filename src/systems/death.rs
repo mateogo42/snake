@@ -1,6 +1,6 @@
 use amethyst::core::Transform;
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{System, SystemData, WriteStorage, Read};
+use amethyst::ecs::{System, SystemData, WriteStorage, Write };
 
 use crate::states::Player;
 
@@ -10,17 +10,16 @@ pub struct DeathSystem;
 impl<'s> System<'s> for DeathSystem {
     type SystemData = (
         WriteStorage<'s, Transform>,
-        Read<'s, Player>
+        Write<'s, Player>
     );
 
-    fn run(&mut self, (mut transforms, player): Self::SystemData) {
-        if player.snake.len() > 0 {
+    fn run(&mut self, (mut transforms, mut player): Self::SystemData) {
+        if player.is_alive  {
             let mut head_transform = transforms.get_mut(player.snake[0].part).unwrap().clone();
             for i in 1..player.snake.len() {
                 let cur_transform = transforms.get(player.snake[i].part).unwrap();
                 if check_collision(&mut head_transform, cur_transform) {
-                    reset_snake();
-                    break;
+                    player.is_alive = false;                  
                 }
             }
         }
@@ -32,9 +31,3 @@ fn check_collision(head: &mut Transform, body: &Transform) -> bool {
 
     dist <= 1.0
 }
-
-
-fn reset_snake() {
-    println!("Dead!");
-}
-

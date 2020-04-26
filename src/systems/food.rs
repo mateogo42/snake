@@ -24,7 +24,7 @@ impl<'s> System<'s> for FoodSystem {
     );
 
     fn run(&mut self, (mut transforms, foods, mut player, mut bodies, mut sprites, entities): Self::SystemData) {
-        if player.snake.len() > 0 {
+        if player.is_alive {
             let food_ids: [usize; 3] = [12, 13, 14];
             let head_transform = transforms.get_mut(player.snake[0].part).unwrap().clone();
             let mut did_eat = false;

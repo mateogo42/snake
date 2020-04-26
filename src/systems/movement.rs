@@ -32,7 +32,7 @@ impl<'s> System<'s> for MoveSystem {
     }
 
     fn run(&mut self, (mut transforms, mut player): Self::SystemData) {
-        if player.snake.len() > 0 {
+        if player.is_alive {
             if self.elapsed_time.elapsed() >= self.max_elapsed_time {
                 let head_transform = transforms.get_mut(player.snake[0].part).unwrap();
                 let mut prev_pos = (head_transform.translation().x, head_transform.translation().y);

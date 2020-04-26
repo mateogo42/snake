@@ -14,8 +14,8 @@ use amethyst::{
 pub const HEIGHT: f32 = 640.0;
 pub const WIDTH: f32 = 640.0;
 pub const SNAKE_VELOCITY: f32 = 1.0;
-pub const SCALE: f32 = 1.0;
-pub const SPRITE_WIDTH: f32 = 32.0 * SCALE;
+pub const SCALE: f32 = 2.0;
+pub const SPRITE_WIDTH: f32 = 16.0 * SCALE;
 
 #[derive(Default)]
 pub struct Snake {
@@ -52,10 +52,10 @@ pub struct Tail;
 #[derive(Default)]
 pub struct Body;
 
-#[derive(Default)]
 pub struct Player {
     pub snake: Vec<BodyPart>,
-    pub vel: (f32, f32)
+    pub vel: (f32, f32),
+    pub is_alive: bool
 }
 
 impl Player {
@@ -64,7 +64,18 @@ impl Player {
             snake: vec![BodyPart{part: head, dir: Direction::Right}, 
                         BodyPart{part: body, dir: Direction::Right}, 
                         BodyPart{part: tail, dir: Direction::Right}],
-            vel: (SNAKE_VELOCITY, 0.0)
+            vel: (SNAKE_VELOCITY, 0.0),
+            is_alive: true
+        }
+    }
+}
+
+impl Default for Player {
+    fn default() -> Self {
+        Player {
+            snake: vec![],
+            vel: (0.0, 0.0),
+            is_alive: false
         }
     }
 }
@@ -103,6 +114,17 @@ impl SimpleState for Snake {
         initialise_food(world, self.sprite_sheet_handle.clone().unwrap());
         initialise_snake(world, self.sprite_sheet_handle.clone().unwrap());
         println!("Game started!");
+    }
+
+    fn update(&mut self, data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
+        let world = &data.world;
+        let player = world.read_resource::<Player>().clone();
+        if !player.is_alive {
+            println!("Player is dead!");
+            return Trans::Pop;
+        }
+
+        Trans::None
     }
 }
 
