@@ -4,11 +4,12 @@ use rand::Rng;
 use rand::seq::SliceRandom;
 use amethyst::core::Transform;
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Join, Entities, System, SystemData, WriteStorage, Write, ReadStorage};
+use amethyst::ecs::{Join, Entities, System, SystemData, WriteStorage, Write, ReadStorage, WriteExpect};
 use amethyst::core::math::Vector3;
 use amethyst::renderer::SpriteRender;
+use amethyst::ui::UiText;
 
-use crate::states::{Player, Food, Body, BodyPart, WIDTH, SPRITE_WIDTH, HEIGHT, SCALE};
+use crate::states::{Player, ScoreText, Food, Body, BodyPart, WIDTH, SPRITE_WIDTH, HEIGHT, SCALE};
 #[derive(SystemDesc)]
 pub struct FoodSystem;
 
@@ -17,13 +18,15 @@ impl<'s> System<'s> for FoodSystem {
         WriteStorage<'s, Transform>,
         ReadStorage<'s, Food>,
         Write<'s, Player>,
+        Write<'s, ScoreText>,
         WriteStorage<'s, Body>,
         WriteStorage<'s, SpriteRender>,
+        WriteStorage<'s, UiText>,
         Entities<'s>,
 
     );
 
-    fn run(&mut self, (mut transforms, foods, mut player, mut bodies, mut sprites, entities): Self::SystemData) {
+    fn run(&mut self, (mut transforms, foods, mut player, mut score_text, mut bodies, mut sprites, mut ui_text, entities): Self::SystemData) {
         if player.is_alive {
             let food_ids: [usize; 3] = [12, 13, 14];
             let head_transform = transforms.get_mut(player.snake[0].part).unwrap().clone();
@@ -40,6 +43,10 @@ impl<'s> System<'s> for FoodSystem {
             }
 
             if did_eat {
+                if let Some(text) = ui_text.get_mut(score_text.entity[0]) {
+                    score_text.score += 1;
+                    text.text = format!("{:0>3}", score_text.score);
+                }                
                 let mut transform = Transform::default();
                 transform.set_translation_xyz(
                     head_transform.translation().x - player.vel.0 * SPRITE_WIDTH * 0.5,

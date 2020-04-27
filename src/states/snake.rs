@@ -8,13 +8,14 @@ use amethyst::{
     core::Transform,
     renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, Texture, SpriteSheetFormat},
     ecs::prelude::{Component, DenseVecStorage, NullStorage, Entity},
-    core::math::Vector3
+    core::math::Vector3,
+    ui::{Anchor, UiTransform, UiText, TtfFormat}
 };
 
-pub const HEIGHT: f32 = 640.0;
-pub const WIDTH: f32 = 640.0;
+pub const HEIGHT: f32 = 160.0;
+pub const WIDTH: f32 = 160.0;
 pub const SNAKE_VELOCITY: f32 = 1.0;
-pub const SCALE: f32 = 2.0;
+pub const SCALE: f32 = 1.0;
 pub const SPRITE_WIDTH: f32 = 16.0 * SCALE;
 
 #[derive(Default)]
@@ -51,6 +52,12 @@ pub struct Tail;
 
 #[derive(Default)]
 pub struct Body;
+
+#[derive(Default)]
+pub struct ScoreText {
+    pub entity: Vec<Entity>,
+    pub score: i64
+}
 
 pub struct Player {
     pub snake: Vec<BodyPart>,
@@ -111,8 +118,10 @@ impl SimpleState for Snake {
         world.register::<Tail>();
         world.register::<Food>();
         initialise_camera(world);
+        initialise_background(world, self.sprite_sheet_handle.clone().unwrap());
         initialise_food(world, self.sprite_sheet_handle.clone().unwrap());
         initialise_snake(world, self.sprite_sheet_handle.clone().unwrap());
+        initialise_score(world);
         println!("Game started!");
     }
 
@@ -232,4 +241,46 @@ fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
         (),
         &sprite_sheet_store
     )
+}
+
+fn initialise_score(world: &mut World) {
+    let font = world.read_resource::<Loader>().load(
+        "fonts/yoster.ttf",
+        TtfFormat,
+        (),
+        &world.read_resource(),
+    );
+    let score_transform = UiTransform::new("score".to_string(), Anchor::TopRight, Anchor::TopRight, 0., 0., 0., 100., 50.);
+
+    let score_entity = world
+        .create_entity()
+        .with(score_transform)
+        .with(UiText::new(font, format!("{:0>3}", "0"), [1., 1., 1., 1.], 50.))
+        .build();
+
+    world.insert(ScoreText {entity: vec![score_entity], score: 0});
+}
+
+fn initialise_background(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>) {
+
+    let sprite = SpriteRender {
+        sprite_sheet: sprite_sheet_handle,
+        sprite_number: 17
+    };
+
+    let rows = (HEIGHT / (2. * SPRITE_WIDTH)).floor() as i64;
+    let cols = (WIDTH / (2. * SPRITE_WIDTH)).floor() as i64;
+
+    for i in 0..rows {
+        for j in 0..cols {
+            let mut transform = Transform::default();
+            transform.set_translation_xyz(SPRITE_WIDTH + (i as f32 * 2.0) * SPRITE_WIDTH, SPRITE_WIDTH + (j as f32 * 2.0) * SPRITE_WIDTH, -1.);
+            transform.set_scale(Vector3::new(SCALE, SCALE, 1.0));
+            world
+                .create_entity()
+                .with(sprite.clone())
+                .with(transform)
+                .build();            
+        }
+    }
 }
