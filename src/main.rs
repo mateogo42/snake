@@ -1,54 +1,44 @@
 mod states;
-mod systems;
+use bevy::prelude::*;
 
-use amethyst::{
-    core::transform::TransformBundle,
-    prelude::*,
-    renderer::{
-        plugins::{RenderFlat2D, RenderToWindow, RenderDebugLines},
-        types::DefaultBackend,
-        RenderingBundle,
-    },
-    utils::application_root_dir,
-    input::{InputBundle, StringBindings},
-    ui::{RenderUi, UiBundle},
-};
+const WIDTH: f32 = 600.0;
+const HEIGHT: f32 = 600.0;
 
-use crate::systems::GameplaySystemBundle;
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+enum GameState {
+    #[default]
+    Menu,
+    Game,
+    Pause,
+}
+fn main() {
+    App::new()
+        .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        resolution: (WIDTH, HEIGHT).into(),
+                        resizable: false,
+                        canvas: Some("#snake".to_string()),
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(ImagePlugin::default_nearest()),
+        )
+        .add_state::<GameState>()
+        .add_systems(Startup, setup)
+        .add_plugins((states::MenuPlugin, states::GamePlugin, states::PausePlugin))
+        .run();
+}
 
-fn main() -> amethyst::Result<()> {
-    amethyst::start_logger(Default::default());
+fn setup(mut commands: Commands) {
+    commands.spawn(Camera2dBundle::default());
+}
 
-    let app_root = application_root_dir()?;
-
-    let config_dir = app_root.join("config");
-    let display_config_path = config_dir.join("display.ron");
-    let binding_path = config_dir.join("bindings.ron");
-
-    let input_bundle = InputBundle::<StringBindings>::new()
-        .with_bindings_from_file(binding_path)?;
-
-    let game_data = GameDataBuilder::default()
-        .with_bundle(
-            RenderingBundle::<DefaultBackend>::new()
-                .with_plugin(
-                    RenderToWindow::from_config_path(display_config_path)?
-                        .with_clear([0.0, 0.0, 0.0, 1.0]),
-                )
-                .with_plugin(RenderDebugLines::default())
-                .with_plugin(RenderFlat2D::default())
-                .with_plugin(RenderUi::default()),
-        )?
-        .with_bundle(TransformBundle::new())?
-        .with_bundle(input_bundle)?
-        .with_bundle(GameplaySystemBundle)?
-        .with_bundle(UiBundle::<StringBindings>::new())?;
-
-
-    let assets_dir = app_root.join("assets");
-    let mut game = Application::new(assets_dir, states::Menu::default(), game_data)?;
-   
-    game.run();
-
-    Ok(())
+fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
+    for entity in &to_despawn {
+        commands.entity(entity).despawn_recursive();
+    }
 }
