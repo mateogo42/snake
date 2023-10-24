@@ -1,62 +1,68 @@
-use amethyst::prelude::*;
-use amethyst::input::{VirtualKeyCode, is_key_down};
-use amethyst::ui::{Anchor, TtfFormat, UiText, UiTransform};
-use amethyst::assets::{Loader};
-use crate::states::*;
+use crate::{despawn_screen, GameState};
+use bevy::{app::AppExit, prelude::*};
 
+pub struct MenuPlugin;
 
-#[derive(Default)]
-pub struct Menu;
+#[derive(Component)]
+struct MenuScreen;
 
-
-impl SimpleState for Menu {
-    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
-        let world = data.world;
-        create_text(world);        
-
-    }
-
-    fn on_pause(&mut self, data: StateData<'_, GameData<'_, '_>>) {
-        let world = data.world;
-        world.delete_all();
-    }
-
-    fn on_resume(&mut self, data: StateData<'_, GameData<'_, '_>>) {
-        let world = data.world;
-        world.delete_all();
-        create_text(world);
-    }
-
-    fn handle_event(&mut self, _data: StateData<'_, GameData<'_, '_>>, event: StateEvent) -> SimpleTrans {
-        if let StateEvent::Window(event) = &event {
-            if is_key_down(&event, VirtualKeyCode::Space) {
-                return Trans::Push(Box::new(Snake::default()))
-            }
-        }
-        Trans::None
+impl Plugin for MenuPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(OnEnter(GameState::Menu), setup)
+            .add_systems(Update, handle_actions.run_if(in_state(GameState::Menu)))
+            .add_systems(OnExit(GameState::Menu), despawn_screen::<MenuScreen>);
     }
 }
 
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::SpaceAround,
+                    ..default()
+                },
+                ..default()
+            },
+            MenuScreen,
+        ))
+        .with_children(|parent| {
+            parent.spawn(
+                TextBundle::from_section(
+                    "S N A K E",
+                    TextStyle {
+                        font: asset_server.load("fonts/yoster.ttf"),
+                        font_size: 100.0,
+                        color: Color::WHITE,
+                    },
+                )
+                .with_text_alignment(TextAlignment::Center),
+            );
+            parent.spawn(TextBundle::from_section(
+                "Press SPACE to start playing",
+                TextStyle {
+                    font: asset_server.load("fonts/yoster.ttf"),
+                    font_size: 20.0,
+                    color: Color::WHITE,
+                },
+            ));
+        });
+}
 
-fn create_text(world: &mut World) {
-    let font = world.read_resource::<Loader>().load(
-        "fonts/yoster.ttf",
-        TtfFormat,
-        (),
-        &world.read_resource(),
-    );
-    
-    let welcome_transform = UiTransform::new("welcome".to_string(), Anchor::Middle, Anchor::Middle, 0., 100., 0., 500., 100.);
-    let play_test_transform = UiTransform::new("play_text".to_string(), Anchor::Middle, Anchor::Middle, 0., -100., 0., 500., 25.);
-    world
-        .create_entity()
-        .with(welcome_transform)
-        .with(UiText::new(font.clone(), "S N A K E".to_string(), [1., 1., 1., 1.], 75.))
-        .build();
+fn handle_actions(
+    input: Res<Input<KeyCode>>,
+    mut app_exit_events: EventWriter<AppExit>,
+    mut game_state: ResMut<NextState<GameState>>,
+) {
+    if input.just_pressed(KeyCode::Escape) {
+        app_exit_events.send(AppExit);
+    }
 
-    world
-        .create_entity()
-        .with(play_test_transform)
-        .with(UiText::new(font, "Press space to start playing".to_string(), [1., 1., 1., 1.], 25.))
-        .build();
+    if input.just_pressed(KeyCode::Space) {
+        game_state.set(GameState::Game);
+        println!("Playing")
+    }
 }

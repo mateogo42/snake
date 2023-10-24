@@ -1,15 +1,11 @@
 [package]
 name = "snake"
 version = "0.1.0"
-authors = []
-edition = "2018"
+authors = ["magonzalezoc@gmail.com"]
+edition = "2021"
 
 [dependencies]
-amethyst = "0.15.0"
-rand = "0.7.3"
-
-[features]
-default = ["vulkan"]
-empty = ["amethyst/empty"]
-metal = ["amethyst/metal"]
-vulkan = ["amethyst/vulkan"]
+parking_lot = "0.11"
+bevy = "0.11.3"
+rand = {version="0.7.3", features=["wasm-bindgen"]}
+getrandom = { version = "0.2", features = ["js"] }
